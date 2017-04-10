@@ -20,15 +20,14 @@ type Post struct {
 	Body   string `json:"body"`
 }
 
-func (p Post ) IsEmpty() bool {
+func (p Post) IsEmpty() bool {
 
 	return reflect.DeepEqual(Post{}, p)
 }
 
-func (p Post) render() {
+func (p Post) Render() {
 
 	s, err := json.MarshalIndent(p, "", "    ")
-
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -40,13 +39,11 @@ func (p Post) render() {
 func hydrate(res *http.Response, p *Post) {
 
 	body, readErr := ioutil.ReadAll(res.Body)
-
 	if readErr != nil {
 		log.Fatal(readErr)
 	}
 
-	jsonErr := json.Unmarshal(body, &p)
-	if jsonErr != nil {
+	if jsonErr := json.Unmarshal(body, &p); jsonErr != nil {
 		log.Fatal(jsonErr)
 	}
 
@@ -58,7 +55,7 @@ func hydrate(res *http.Response, p *Post) {
 func call(url string) *http.Response {
 
 	spaceClient := http.Client{
-		Timeout: time.Second * 2, // Maximum of 2 secs
+		Timeout: time.Second * 2,
 	}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -88,13 +85,13 @@ func init() {
 
 			url := "https://jsonplaceholder.typicode.com/posts/" + strings.Join(args, "")
 
-			var res = call(url);
+			res := call(url)
 
-			var p = &Post{}
+			p := &Post{}
+
 			hydrate(res, p)
 
-			p.render()
-
+			p.Render()
 		},
 	})
 }
