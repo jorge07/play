@@ -71,27 +71,31 @@ func call(url string) *http.Response {
 	return res
 }
 
+var fakeCommand = &cobra.Command{
+	Use:   "fake",
+	Short: "Display fake data given an identifer",
+	Long: "Display fake data from https://jsonplaceholder.typicode.com/posts fir the id given",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		identifier, err := cmd.Flags().GetString("identifier")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		url := "https://jsonplaceholder.typicode.com/posts/" + identifier
+
+		res := call(url)
+
+		p := &Post{}
+
+		hydrate(res, p)
+
+		p.Render()
+	},
+}
+
 func init() {
 
-	RootCmd.AddCommand(&cobra.Command{
-		Use:   "fake",
-		Short: "Display fake data given an identifer",
-		Long: "Display fake data from https://jsonplaceholder.typicode.com/posts fir the id given",
-		Run: func(cmd *cobra.Command, args []string) {
-
-			if len(args) == 0 {
-				fmt.Print("Page its necesary");
-			}
-
-			url := "https://jsonplaceholder.typicode.com/posts/" + strings.Join(args, "")
-
-			res := call(url)
-
-			p := &Post{}
-
-			hydrate(res, p)
-
-			p.Render()
-		},
-	})
+	fakeCommand.Flags().StringP("identifier", "id", "", "A numberic identifier")
+	RootCmd.AddCommand(fakeCommand)
 }
