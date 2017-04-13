@@ -1,75 +1,10 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
-	"net/http"
-	"strings"
-	"encoding/json"
-	"time"
 	"log"
-	"io/ioutil"
-	"reflect"
+	"github.com/jorge07/play/post"
 )
-
-type Post struct {
-	UserId int `json:"userId"`
-	Id     int `json:"id"`
-	Title  string `json:"title"`
-	Body   string `json:"body"`
-}
-
-func (p Post) IsEmpty() bool {
-
-	return reflect.DeepEqual(Post{}, p)
-}
-
-func (p Post) Render() {
-
-	s, err := json.MarshalIndent(p, "", "    ")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Printf("%s", s)
-	fmt.Println("")
-}
-
-func hydrate(res *http.Response, p *Post) {
-
-	body, readErr := ioutil.ReadAll(res.Body)
-	if readErr != nil {
-		log.Fatal(readErr)
-	}
-
-	if jsonErr := json.Unmarshal(body, &p); jsonErr != nil {
-		log.Fatal(jsonErr)
-	}
-
-	if p.IsEmpty() == true {
-		log.Fatal("Empty response")
-	}
-}
-
-func call(url string) *http.Response {
-
-	spaceClient := http.Client{
-		Timeout: time.Second * 2,
-	}
-
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	res, getErr := spaceClient.Do(req)
-	if getErr != nil {
-		log.Fatal(getErr)
-	}
-
-	return res
-}
 
 var fakeCommand = &cobra.Command{
 	Use:   "fake",
@@ -82,13 +17,13 @@ var fakeCommand = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		url := "https://jsonplaceholder.typicode.com/posts/" + identifier
+		if identifier == "" {
+			log.Fatal("An identifier has to be provided")
+		}
 
-		res := call(url)
+		repository := post.GetRepository()
 
-		p := &Post{}
-
-		hydrate(res, p)
+		p := repository.Call(identifier)
 
 		p.Render()
 	},
@@ -96,6 +31,6 @@ var fakeCommand = &cobra.Command{
 
 func init() {
 
-	fakeCommand.Flags().StringP("identifier", "id", "", "A numberic identifier")
+	fakeCommand.Flags().StringP("identifier", "i", "", "A numberic identifier")
 	RootCmd.AddCommand(fakeCommand)
 }
